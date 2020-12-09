@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+    <script> // Calculation and Redraw functions
+        function calculate() {
+            var years = [];
+            var totals = [];
+            var capital_gains = [];
+            var cg;
+            
+            var total = parseFloat(document.getElementById("initial_investment").value);
+            var invest = parseFloat(document.getElementById("monthly_investment").value);
+            var interest = parseFloat(document.getElementById("annual_appreciation").value);
+            var n_years = parseInt(document.getElementById("n_years").value);
+
+            for(var i=0; i<12*n_years; i++){
+                cg = total*interest/12
+                total += (cg + invest)
+                if((i+1)%12==0){
+                    years.push((i+1)/12);
+                    totals.push(total);
+                    capital_gains.push(cg);
+                }
+            }
+            return {"y": years, "t":totals, "c":capital_gains}
+        }
+
+
+        function redraw() {
+            var o = calculate();
+            myChart.data.labels = o["y"];
+            myChart.data.datasets[0].data = o["t"];
+            myChart.data.datasets[1].data = o["c"];
+            myChart.update();
+        }
+
+    </script>
+
+<title>Compound Interest</title>
+</head>
+<body>
+
+<h1>Compound Interest</h1>
+
+<div class="input-container">
+    <table>
+        <tr>
+            <td>Initial Investment:</td>
+            <td><input id="initial_investment" type="text" value="0" onchange="redraw()"></td>
+        </tr>
+        <tr>
+            <td>Monthly Investment:</td>
+            <td><input id = "monthly_investment" type="text" value="100" onchange="redraw()"></td>
+        </tr>
+        <tr>
+            <td>Annual Appreciation:</td>
+            <td><input id = "annual_appreciation" type="text" value="0.10" onchange="redraw()"></td>
+        </tr>
+        <tr>
+            <td>Years:</td>
+            <td><input id = "n_years" type="text" value="45" onchange="redraw()"></td>
+        </tr>
+    </table>
+</div>
+
+<div class="chart-container" >
+    <canvas id="canvas" width="3" height="1"></canvas>
+</div>
+
+<script> // Initialize Chart
+    var o = calculate();
+    var ctx = document.getElementById("canvas");
+    var myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: o["y"],
+            datasets:[
+                {
+                    data: o["t"],
+                    label: "Value",
+                },
+                {
+                    data: o["c"],
+                    label: "Monthly Appreciation",
+                },
+                
+            ]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        // Include a dollar sign in the ticks
+                        callback: function(value, index, values) {
+                            return "$"+value.toLocaleString();
+                        }
+                    }
+                }],
+                xAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: '# of Years'
+                    }
+                }]
+            }
+        }
+        
+    });
+</script>
+
+</body>
+</html>

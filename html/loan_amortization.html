@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+    <script> // Calculation and Redraw functions
+        function calculate() {
+            var years = [];
+            var totals = [];
+            var interest = [];
+            var interest_paid=0;
+            
+            var P = parseFloat(document.getElementById("principal").value);
+            var apr = parseFloat(document.getElementById("interest").value);
+            var n = parseFloat(document.getElementById("n_years").value);
+            var extra_payment = parseFloat(document.getElementById("extra_payment").value);
+
+            var monthly_payments = (P*apr/12)*((1+apr/12)**(n*12))/(((1+apr/12)**(n*12))-1);
+            monthly_payments -= monthly_payments%.01;
+
+            document.getElementById("required_payment").value = monthly_payments;
+
+            for(var i=0; i<12*n; i++){
+                interest_paid += (P*apr/12)
+                P += (P*apr/12) - monthly_payments - extra_payment;
+                if (P<0) {P=0;}
+                if((i+1)%12==0){
+                    years.push((i+1)/12);
+                    totals.push(P);
+                    interest.push(interest_paid);
+                }
+            }
+            return {"years": years, "totals":totals, "interest":interest};
+        }
+
+
+        function redraw() {
+            var o = calculate();
+            myChart.data.labels = o["years"];
+            myChart.data.datasets[0].data = o["totals"];
+            myChart.data.datasets[1].data = o["interest"];
+            myChart.update();
+        }
+
+    </script>
+
+<title>Loan Amortization</title>
+</head>
+<body>
+
+<h1>Loan Amortization</h1>
+
+<div class="input-container">
+    <table>
+        <tr>
+            <td>Principal:</td>
+            <td><input id="principal" type="text" value="150000" onchange="redraw()"></td>
+        </tr>
+        <tr>
+            <td>Interest:</td>
+            <td><input id = "interest" type="text" value="0.08" onchange="redraw()"></td>
+        </tr>
+        <tr>
+            <td>Years:</td>
+            <td><input id = "n_years" type="text" value="30" onchange="redraw()"></td>
+        </tr>
+        <tr>
+            <td>Extra Payment:</td>
+            <td><input id = "extra_payment" type="text" value="0" onchange="redraw()"></td>
+        </tr>
+
+        <tr><td> <br> </td></tr>
+
+        <tr>
+            <td>Required Monthly Payments:</td>
+            <td><input id = "required_payment" type="text" value="0" disabled="true"></td>
+        </tr>
+    </table>
+</div>
+
+<div class="chart-container" >
+    <canvas id="canvas" width="3" height="1"></canvas>
+</div>
+
+<script> // Initialize Chart
+    var o = calculate();
+    var ctx = document.getElementById("canvas");
+    var myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: o["years"],
+            datasets:[
+                {
+                    data: o["totals"],
+                    label: "Remaining Principal",
+                },
+                {
+                    data: o["interest"],
+                    label: "Cumulative Interest",
+                },
+                
+            ]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        // Include a dollar sign in the ticks
+                        callback: function(value, index, values) {
+                            return "$"+value.toLocaleString();
+                        }
+                    }
+                }],
+                xAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: '# of Years'
+                    }
+                }]
+            }
+        }
+        
+    });
+</script>
+
+</body>
+</html>
